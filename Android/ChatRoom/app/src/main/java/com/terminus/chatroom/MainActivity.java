@@ -1,10 +1,9 @@
 package com.terminus.chatroom;
 
-import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -12,6 +11,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.terminus.chatroom.databinding.ActivityMainBinding;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,17 +29,19 @@ import okio.ByteString;
 
 public class MainActivity extends AppCompatActivity {
 
+    private ActivityMainBinding mainBinding;
     private WebSocket webSocket;
     private MessageAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        mainBinding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(mainBinding.getRoot());
 
-        ListView messageList = findViewById(R.id.messageList);
-        final EditText messageBox = findViewById(R.id.messageBox);
-        TextView send = findViewById(R.id.send);
+        ListView messageList = mainBinding.messageList;
+        final EditText messageBox = mainBinding.messageBox;
+        TextView send = mainBinding.send;
 
 
 
@@ -51,39 +54,36 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        send.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        send.setOnClickListener(view -> {
 
 
-                String message = messageBox.getText().toString();
-
-
-
-                if (!message.isEmpty()) {
-
-
-                    webSocket.send(message);
-                    messageBox.setText("");
+            String message = messageBox.getText().toString();
 
 
 
-                    JSONObject jsonObject = new JSONObject();
-
-                    try {
+            if (!message.isEmpty()) {
 
 
-                        jsonObject.put("message", message);
-                        jsonObject.put("byServer", false);
-
-                        adapter.addItem(jsonObject);
+                webSocket.send(message);
+                messageBox.setText("");
 
 
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
 
+                JSONObject jsonObject = new JSONObject();
+
+                try {
+
+
+                    jsonObject.put("message", message);
+                    jsonObject.put("byServer", false);
+
+                    adapter.addItem(jsonObject);
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
+
             }
         });
 
@@ -102,7 +102,9 @@ public class MainActivity extends AppCompatActivity {
 
 
         //replace x.x.x.x with your machine's IP Address
-        Request request = new Request.Builder().url("ws://x.x.x.x:8080").build();
+//        Request request = new Request.Builder().url("ws://x.x.x.x:8080").build();
+        Request request = new Request.Builder().url("ws://192.168.8.144:6001").build();
+
 
 
         SocketListener socketListener = new SocketListener(this);
@@ -151,24 +153,21 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onMessage(WebSocket webSocket, final String text) {
 
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+            activity.runOnUiThread(() -> {
 
-                    JSONObject jsonObject = new JSONObject();
+                JSONObject jsonObject = new JSONObject();
 
-                    try {
+                try {
 
 
-                        jsonObject.put("message", text);
-                        jsonObject.put("byServer", true);
+                    jsonObject.put("message", text);
+                    jsonObject.put("byServer", true);
 
-                        adapter.addItem(jsonObject);
+                    adapter.addItem(jsonObject);
 
 
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
             });
         }
